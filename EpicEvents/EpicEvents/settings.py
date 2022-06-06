@@ -38,7 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'EpicEvents'
+    'EpicEvents',
+    'AdminManagementTeam',
+    'SalesTeam',
+    'SupportTeam',
 ]
 
 MIDDLEWARE = [
