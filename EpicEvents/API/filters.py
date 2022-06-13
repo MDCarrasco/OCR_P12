@@ -4,13 +4,13 @@ from .models import Contract, Client, Event
 
 class ContractFilter(filters.FilterSet):
     date_created = filters.CharFilter(field_name='date_created', lookup_expr='icontains')
-    amount = filters.NumberFilter(field_name='amount', lookup_expr='gte')
+    payment_amount = filters.NumberFilter(field_name='payment_amount', lookup_expr='gte')
     client_last_name = filters.CharFilter(field_name='client__last_name', lookup_expr='icontains')
     client_email = filters.CharFilter(field_name='client__email', lookup_expr='iexact')
 
     class Meta:
         model = Contract
-        fields = ['date_created', 'amount', 'client']
+        fields = ['date_created', 'payment_amount', 'client']
 
 
 class ClientFilter(filters.FilterSet):

@@ -1,6 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager, Group, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Group, PermissionsMixin
 from datetime import datetime
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -38,29 +39,39 @@ class UserManager(BaseUserManager):
         return self._create_user(email, group, password, **extra_fields)
 
 
-class User(AbstractUser):
-    @property
-    def groups(self):
-        raise AttributeError
-
-    @property
-    def user_permissions(self):
-        raise AttributeError
-
+class User(AbstractBaseUser):
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='%(class)s_group')
     phone_number = models.CharField(max_length=20, null=True, blank=True)
 
     username = None
+    first_name = models.CharField('first name', max_length=150, blank=True)
+    last_name = models.CharField('last name', max_length=150, blank=True)
     email = models.EmailField(unique=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    is_superuser = models.BooleanField(
+        'superuser status',
+        default=False,
+        help_text=(
+            'Designates that this user has all permissions without '
+            'explicitly assigning them.'
+        ),
+    )
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
+    date_joined = models.DateTimeField('date joined', default=timezone.now)
     objects = UserManager()
 
     def __str__(self):
         return f'{self.email}'
+
+    def has_perm(self, perm, obj=None):
+        return self.is_staff
+
+    def has_module_perms(self, app_label):
+        return self.is_staff
 
 
 class Client(models.Model):
@@ -96,7 +107,7 @@ class Contract(models.Model):
     date_updated = models.DateTimeField(auto_now_add=True)
 
     status = models.BooleanField(default=True)
-    amount = models.FloatField(default=0.0)
+    payment_amount = models.FloatField(default=0.0)
     payment_due = models.DateTimeField(auto_now_add=False)
 
     def __str__(self):
@@ -110,7 +121,7 @@ class Contract(models.Model):
         return super(Contract, self).save()
 
 
-class EventStatus(models.Model):
+class Event(models.Model):
     CREATED = 'created'
     INPROGRESS = 'in_progress'
     FINISHED = 'finished'
@@ -120,13 +131,6 @@ class EventStatus(models.Model):
         (FINISHED, 'finished')
     )
 
-    event_status = models.CharField(max_length=20, choices=EVENT_STATUS)
-
-    def __str__(self):
-        return f'{self.event_status}'
-
-
-class Event(models.Model):
     name = models.CharField(max_length=30, null=True, blank=True)
     support_contact = models.ForeignKey(to=User, on_delete=models.CASCADE)
     client = models.ForeignKey(to=Client, on_delete=models.CASCADE)
@@ -134,7 +138,7 @@ class Event(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now_add=True)
 
-    event_status = models.ForeignKey(to=EventStatus, on_delete=models.CASCADE)
+    event_status = models.CharField(max_length=20, choices=EVENT_STATUS)
 
     attendees = models.IntegerField(default=0)
     event_date = models.DateTimeField(auto_now_add=False)

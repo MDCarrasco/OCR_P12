@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib import admin
-from API.models import User, Client, Contract, Event, EventStatus
+from API.models import User, Client, Contract, Event
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
@@ -49,6 +49,11 @@ admin.site.register(User, UserAdmin)
 class ClientAdmin(admin.ModelAdmin):
     list_filter = ('email', 'last_name', 'date_created')
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'sales_contact':
+            kwargs["queryset"] = User.objects.filter(group__name='sales_member')
+        return super(ClientAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 admin.site.register(Client, ClientAdmin)
 
@@ -56,13 +61,22 @@ admin.site.register(Client, ClientAdmin)
 class ContractAdmin(admin.ModelAdmin):
     list_filter = ('date_created',)
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'sales_contact':
+            kwargs["queryset"] = User.objects.filter(group__name='sales_member')
+        return super(ContractAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 admin.site.register(Contract, ContractAdmin)
 
 
 class EventAdmin(admin.ModelAdmin):
-    list_filter = ('event_status__event_status', 'date_created')
+    list_filter = ('event_status', 'date_created')
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'support_contact':
+            kwargs["queryset"] = User.objects.filter(group__name='support_member')
+        return super(EventAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 admin.site.register(Event, EventAdmin)
-admin.site.register(EventStatus)

@@ -28,20 +28,17 @@ class UserSignupSerializer(ModelSerializer):
             'tokens'
         ]
 
-    @staticmethod
-    def validate_email(value: str) -> str:
+    def validate_email(self, value: str) -> str:
         if User.objects.filter(email=value).exists():
             raise ValidationError('User already exists')
         return value
 
-    @staticmethod
-    def validate_password(value: str) -> str:
+    def validate_password(self, value: str) -> str:
         if value is not None:
             return make_password(value)
         raise ValidationError('Password is empty')
 
-    @staticmethod
-    def get_tokens(user: User) -> dict:
+    def get_tokens(self, user: User) -> dict:
         tokens = RefreshToken.for_user(user)
         data = {
             'refresh': str(tokens),

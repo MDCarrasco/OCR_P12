@@ -1,13 +1,15 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.http import QueryDict
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.serializers import ValidationError
 from rest_framework.response import Response
 from .filters import ContractFilter, ClientFilter, EventFilter
-from .models import Contract, Client, Event, EventStatus
+from .models import Contract, Client, Event
 from .serializers import ContractSerializer, UserSignupSerializer, ClientSerializer, EventSerializer
 from EpicEvents.utils import get_id_by_email
 from EpicEvents.permissions import IsSales, IsSupport, IsManager
@@ -18,10 +20,12 @@ User = get_user_model()
 
 class SignupViewset(APIView):
 
-    permission_classes = (IsManager, )
-
     def post(self, request):
-        serializer = UserSignupSerializer(data=request.data)
+        group_name = request.data['group']
+        group_pk = Group.objects.get(name=group_name).pk
+        data = QueryDict.copy(request.data)
+        data['group'] = group_pk
+        serializer = UserSignupSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
             user.save()
@@ -176,7 +180,7 @@ class EventViewset(ModelViewSet):
             request.POST.pop('client_email', None)
         except ValidationError:
             return Response({'client_email': 'email does not exists.'})
-        request.POST['event_status'] = EventStatus.objects.get(event_status="created").id
+        request.POST['event_status'] = "created"
         request.POST._mutable = False
         return super(EventViewset, self).create(request, *args, **kwargs)
 
