@@ -26,7 +26,7 @@ class SignupViewset(APIView):
         data = QueryDict.copy(request.data)
         data['group'] = group_pk
         serializer = UserSignupSerializer(data=data)
-        if serializer.is_valid():
+        if serializer.is_valid() and group_name != "superuser":
             user = serializer.save()
             user.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -50,14 +50,17 @@ class ClientViewset(ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        if self.request.user.group == 'sales_member':
-            return Client.objects.filter(sales_contact=self.request.user).order_by("date_created")
-        elif self.request.user.group == 'support_member':
-            user_assigned_events_clients_ids = [event.client.id for event in Event.objects.filter(support_contact=self.request.user)]
-            return Client.objects.filter(id__in=user_assigned_events_clients_ids)
-        elif self.request.user.group == 'management_member':
-            return Client.objects.all().order_by("date_created")
+        if self.request.method != 'GET':
+            if self.request.user.group == Group.objects.get(name='sales_member'):
+                return Client.objects.filter(sales_contact=self.request.user.pk).order_by("date_created")
+            elif self.request.user.group == Group.objects.get(name='support_member'):
+                user_assigned_events_clients_ids = [event.client.id for event in Event.objects.filter(support_contact=self.request.user.pk)]
+                return Client.objects.filter(id__in=user_assigned_events_clients_ids)
+            elif self.request.user.group == Group.objects.get(name='adminmanagement_member'):
+                return Client.objects.all().order_by("date_created")
+        return Client.objects.all().order_by("date_created")
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         request.POST._mutable = True
         try:
@@ -68,6 +71,7 @@ class ClientViewset(ModelViewSet):
         request.POST._mutable = False
         return super(ClientViewset, self).create(request, *args, **kwargs)
 
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         request.POST._mutable = True
         try:
@@ -160,14 +164,17 @@ class EventViewset(ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        if self.request.user.group == 'support_member':
-            return Event.objects.filter(support_contact=self.request.user)
-        elif self.request.user.group == 'sales_member':
-            user_assigned_clients_ids = [client.id for client in Client.objects.filter(sales_contact=self.request.user)]
-            return Event.objects.filter(client__in=user_assigned_clients_ids)
-        elif self.request.user.group == 'management_member':
-            return Event.objects.all().order_by("date_created")
+        if self.request.method != 'GET':
+            if self.request.user.group == Group.objects.get(name='support_member'):
+                return Event.objects.filter(support_contact=self.request.user)
+            elif self.request.user.group == Group.objects.get(name='sales_member'):
+                user_assigned_clients_ids = [client.id for client in Client.objects.filter(sales_contact=self.request.user)]
+                return Event.objects.filter(client__in=user_assigned_clients_ids)
+            elif self.request.user.group == Group.objects.get(name='adminmanagement_member'):
+                return Event.objects.all().order_by("date_created")
+        return Event.objects.all().order_by("date_created")
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         request.POST._mutable = True
         try:
@@ -184,6 +191,7 @@ class EventViewset(ModelViewSet):
         request.POST._mutable = False
         return super(EventViewset, self).create(request, *args, **kwargs)
 
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         request.POST._mutable = True
         try:
@@ -196,11 +204,6 @@ class EventViewset(ModelViewSet):
             request.POST.pop('client_email', None)
         except ValidationError:
             return Response({'client_email': 'email does not exists.'})
-        try:
-            request.POST['event_status'] = EventStatus.objects.get(event_status=request.POST['event_status']).id
-        except ObjectDoesNotExist:
-            return Response(
-                {"event_status": "Not a valid status. Please enter one of these: 'created', 'in_pogress', 'finished'"})
         request.POST._mutable = False
         return super(EventViewset, self).create(request, *args, **kwargs)
 

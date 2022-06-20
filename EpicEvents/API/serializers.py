@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from drf_writable_nested import UniqueFieldsMixin
 from rest_framework.serializers import ModelSerializer, ValidationError, SerializerMethodField
 from rest_framework import fields
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -47,7 +48,7 @@ class UserSignupSerializer(ModelSerializer):
         return data
 
 
-class UserSerializer(ModelSerializer):
+class UserSerializer(UniqueFieldsMixin, ModelSerializer):
     class Meta:
         model = User
         fields = [
@@ -60,7 +61,7 @@ class UserSerializer(ModelSerializer):
         ]
 
 
-class ClientSerializer(ModelSerializer):
+class ClientSerializer(UniqueFieldsMixin, ModelSerializer):
 
     class Meta:
         model = Client
@@ -102,6 +103,7 @@ class EventSerializer(ModelSerializer):
         model = Event
         fields = [
             'id',
+            'name',
             'support_contact',
             'client',
             'date_created',

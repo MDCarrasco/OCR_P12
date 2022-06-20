@@ -1,7 +1,7 @@
 from typing import Union
 from rest_framework.serializers import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
-from API.models import Client
+from API.models import Client, User
 
 
 def get_id_by_email(email: str) -> Union[int, None]:

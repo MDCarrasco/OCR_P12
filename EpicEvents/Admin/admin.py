@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, forms
 from django.contrib import admin
 from API.models import User, Client, Contract, Event
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -32,9 +32,9 @@ class UserAdmin(BaseUserAdmin):
     def filter_horizontal(self):
         return ()
 
-    add_form = CustomUserCreationForm
     form = CustomUserChangeForm
-    list_filter = ('group', )
+    add_form = CustomUserCreationForm
+    list_filter = ('group',)
     exclude = ('username',)
     fieldsets = (
         ('Personal info', {'fields': ('first_name', 'last_name', 'phone_number', 'email', 'password')}),
@@ -48,7 +48,7 @@ class UserAdmin(BaseUserAdmin):
                 'fields': ('email', 'password1', 'password2', 'group')}
         ),
     )
-    list_display = ('id', 'email', )
+    list_display = ('id', 'email',)
     ordering = ('email',)
 
 
