@@ -1,7 +1,16 @@
+from django.contrib.auth.models import Group
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib import admin
 from API.models import User, Client, Contract, Event
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
+
+def has_superuser_permission(request):
+    return request.user.is_active and (request.user.is_superuser or request.user.group == Group.objects.get(name="adminmanagement_member"))
+
+
+# Only active superuser can access root admin site (default)
+admin.site.has_permission = has_superuser_permission
 
 
 class CustomUserCreationForm(UserCreationForm):
