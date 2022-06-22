@@ -10,7 +10,7 @@ class ContractFilter(filters.FilterSet):
 
     class Meta:
         model = Contract
-        fields = ['date_created', 'payment_amount', 'client']
+        fields = ['date_created', 'payment_amount', 'client', ]
 
 
 class ClientFilter(filters.FilterSet):
@@ -23,10 +23,11 @@ class ClientFilter(filters.FilterSet):
 
 
 class EventFilter(filters.FilterSet):
+    event_name = filters.CharFilter(field_name='name', lookup_expr='iexact')
     event_date = filters.CharFilter(field_name='event_date', lookup_expr='icontains')
     client_last_name = filters.CharFilter(field_name='client__last_name', lookup_expr='icontains')
     client_email = filters.CharFilter(field_name='client__email', lookup_expr='iexact')
 
     class Meta:
         model = Event
-        fields = ['event_date', 'client']
+        fields = ['name', 'event_date', 'client', ]

@@ -91,12 +91,12 @@ class ContractSerializer(ModelSerializer):
             'date_created',
             'date_updated',
             'status',
-            'amount',
+            'payment_amount',
             'payment_due'
         ]
 
 
-class EventSerializer(ModelSerializer):
+class EventSerializer(UniqueFieldsMixin, ModelSerializer):
     event_date = fields.DateTimeField(input_formats=['%Y-%m-%d %H:%M:%S'])
 
     class Meta:
@@ -113,3 +113,6 @@ class EventSerializer(ModelSerializer):
             'event_date',
             'notes'
         ]
+        extra_kwargs = {
+            'name': {'read_only': False, 'validators': []},
+        }

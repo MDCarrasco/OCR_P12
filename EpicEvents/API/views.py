@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import QueryDict
 from rest_framework import status
@@ -103,14 +102,16 @@ class ContractViewset(ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        if self.request.user.group == 'sales_member':
-            return Contract.objects.filter(sales_contact=self.request.user).order_by("date_created")
-        elif self.request.user.group == 'support_member':
-            user_assigned_events_clients_ids = [event.client.id for event in
-                                                Event.objects.filter(support_contact=self.request.user)]
-            return Contract.objects.filter(client__in=user_assigned_events_clients_ids)
-        elif self.request.user.group == 'management_member':
-            return Contract.objects.all().order_by("date_created")
+        print("get_queryset")
+        if self.request.method != 'GET':
+            if self.request.user.group == Group.objects.get(name='sales_member'):
+                return Contract.objects.filter(sales_contact=self.request.user.pk).order_by("date_created")
+            elif self.request.user.group == Group.objects.get(name='support_member'):
+                user_assigned_events_clients_ids = [event.client.id for event in Event.objects.filter(support_contact=self.request.user)]
+                return Contract.objects.filter(client__in=user_assigned_events_clients_ids)
+            elif self.request.user.group == Group.objects.get(name='adminmanagement_member'):
+                return Contract.objects.all().order_by("date_created")
+        return Contract.objects.all().order_by("date_created")
 
     @transaction.atomic
     def update(self, request, *args, **kwargs):
@@ -166,7 +167,7 @@ class EventViewset(ModelViewSet):
     def get_queryset(self):
         if self.request.method != 'GET':
             if self.request.user.group == Group.objects.get(name='support_member'):
-                return Event.objects.filter(support_contact=self.request.user)
+                return Event.objects.filter(support_contact=self.request.user.pk).order_by("date_created")
             elif self.request.user.group == Group.objects.get(name='sales_member'):
                 user_assigned_clients_ids = [client.id for client in Client.objects.filter(sales_contact=self.request.user)]
                 return Event.objects.filter(client__in=user_assigned_clients_ids)
@@ -205,7 +206,7 @@ class EventViewset(ModelViewSet):
         except ValidationError:
             return Response({'client_email': 'email does not exists.'})
         request.POST._mutable = False
-        return super(EventViewset, self).create(request, *args, **kwargs)
+        return super(EventViewset, self).update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         return super(EventViewset, self).destroy(request, *args, **kwargs)

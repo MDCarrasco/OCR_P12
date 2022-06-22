@@ -131,7 +131,7 @@ class Event(models.Model):
         (FINISHED, 'finished')
     )
 
-    name = models.CharField(max_length=30, null=True, blank=True)
+    name = models.CharField(max_length=30, unique=True)
     support_contact = models.ForeignKey(to=User, on_delete=models.CASCADE)
     client = models.ForeignKey(to=Client, on_delete=models.CASCADE)
 
@@ -147,4 +147,11 @@ class Event(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+    def update_date(self):
+        self.date_updated = datetime.now()
+
+    def save(self, *args, **kwargs):
+        self.update_date()
+        return super(Event, self).save()
 
